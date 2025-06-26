@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\dlwjd\\OneDrive\\Desktop\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog.csproj": {}
+    "C:\\Users\\dlwjd\\Desktop\\gitTest\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog.csproj": {}
   },
   "projects": {
-    "C:\\Users\\dlwjd\\OneDrive\\Desktop\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog.csproj": {
+    "C:\\Users\\dlwjd\\Desktop\\gitTest\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\dlwjd\\OneDrive\\Desktop\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog.csproj",
+        "projectUniqueName": "C:\\Users\\dlwjd\\Desktop\\gitTest\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog.csproj",
         "projectName": "AdvancedBIMLog",
-        "projectPath": "C:\\Users\\dlwjd\\OneDrive\\Desktop\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog.csproj",
+        "projectPath": "C:\\Users\\dlwjd\\Desktop\\gitTest\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog.csproj",
         "packagesPath": "C:\\Users\\dlwjd\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\dlwjd\\OneDrive\\Desktop\\AdvancedBIMLog\\AdvancedBIMLog\\obj\\",
+        "outputPath": "C:\\Users\\dlwjd\\Desktop\\gitTest\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -22,15 +22,15 @@
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net8.0"
+          "net8.0-windows"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net8.0": {
-            "targetAlias": "net8.0",
+          "net8.0-windows7.0": {
+            "targetAlias": "net8.0-windows",
             "projectReferences": {}
           }
         },
@@ -47,8 +47,14 @@
         "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
+        "net8.0-windows7.0": {
+          "targetAlias": "net8.0-windows",
+          "dependencies": {
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "pqfOSjMdzy4=",
+  "dgSpecHash": "XLQxCEZauaI=",
   "success": true,
-  "projectFilePath": "C:\\Users\\dlwjd\\OneDrive\\Desktop\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "C:\\Users\\dlwjd\\Desktop\\gitTest\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog\\AdvancedBIMLog.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\dlwjd\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
+  ],
   "logs": []
 }
