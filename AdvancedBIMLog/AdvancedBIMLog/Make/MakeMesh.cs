@@ -237,10 +237,5 @@ namespace AdvancedBIMLog.Make
                 indicesDict[mName] = indices;
             }
         }
-
-        void MakeCurtainWalltoText(Document doc, JObject job, ICollection<ElementId> elemIds, Options options)
-        {
-
-        }
     }
 }

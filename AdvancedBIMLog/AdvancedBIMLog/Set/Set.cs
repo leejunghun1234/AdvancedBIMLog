@@ -29,7 +29,7 @@ namespace AdvancedBIMLog.Set
                 if (fi.Exists)
                 {
                     string logFilePath = "C:\\ProgramData\\Autodesk\\Revit";
-                    string pathFile = Path.Combine(logFilePath, "BIG_shapeLogDirectory.txt");
+                    string pathFile = Path.Combine(logFilePath, "ABL_Directory.txt");
                     using (StreamReader readtext = new StreamReader(pathFile, true))
                     {
                         main.folderPath = readtext.ReadLine();
@@ -44,12 +44,17 @@ namespace AdvancedBIMLog.Set
                     {
                         main.folderPath = folderBrowser.SelectedPath;
                         string LogFilePath = "C:\\ProgramData\\Autodesk\\Revit";
-                        string pathFile = Path.Combine(LogFilePath, "BIG_shapeLogDirectory.txt");
+                        string pathFile = Path.Combine(LogFilePath, "ABL_Directory.txt");
                         using (StreamWriter writetext = new StreamWriter(pathFile, true))
                         {
                             writetext.WriteLine(main.folderPath);
                         }
                     }
+                }
+
+                if (!Directory.Exists(main.tempFolderPath))
+                {
+                    Directory.CreateDirectory(main.tempFolderPath);
                 }
             }
             catch

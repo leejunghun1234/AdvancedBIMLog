@@ -23,7 +23,7 @@ namespace LogShape
 
         // 로그 저장할 폴더의 경로
         public string folderPath;
-        public string tempFolderPath = "C:\\ProgramData\\Autodesk\\Revit\\temp";
+        public string tempFolderPath = "C:\\ProgramData\\Autodesk\\Revit\\ABL_temp";
 
         // 최종 파일 추출
         //
@@ -84,8 +84,6 @@ namespace LogShape
 
         // 로그 경로 추출
         public Dictionary<string, string> timeAndPath = []; // GUID 와 timeLog path
-
-        
 
         public Result OnStartup(UIControlledApplication application)
         {
