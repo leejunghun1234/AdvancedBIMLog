@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
+using LogShape;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,28 @@ namespace AdvancedBIMLog
 {
     internal class GetInfo
     {
+        public static string GetProjectInfo(Document doc)
+        {
+            var main = new BIMLog();
+            main.userId = doc.Application.Username;
+            string filename = doc.PathName;
+            BasicFileInfo info = BasicFileInfo.Extract(filename);
+
+            DocumentVersion v = info.GetDocumentVersion();
+            string projectId = v.VersionGUID.ToString();
+
+            main.jsonFile = main.fileAndPath[$"{doc.CreationGUID}"];
+            main.jobject = main.fileAndJObject[$"{doc.CreationGUID}"];
+            main.timelog = main.timeAndJObject[$"{doc.CreationGUID}"];
+            main.timelog_sub = main.timeAndList[$"{doc.CreationGUID}"];
+
+            string index = main.folderPath + "\\" + DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss") + $"_{doc.CreationGUID}";
+            string extension = main.jsonFile.Substring(0, index.Length);
+
+            return extension;
+        }
+
+
         public static List<string> paramChecker = new List<string>
         {
             "Image", "IFC", "Phase", "Cross", "Related", "Location Line", "Mark", "Design", "Options",

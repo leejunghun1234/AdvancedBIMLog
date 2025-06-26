@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AdvancedBIMLog.MakeMesh
+namespace AdvancedBIMLog.Make
 {
     internal class MakeMesh
     {
@@ -45,7 +45,7 @@ namespace AdvancedBIMLog.MakeMesh
 
             // 객체에 대한 geometry 추출
             GeometryElement geomElem = elem.get_Geometry(options);
-            
+
             // geometry to json
             if (elemBuiltInCat == BuiltInCategory.OST_Walls && ((Wall)elem).CurtainGrid != null)
             {
@@ -82,7 +82,7 @@ namespace AdvancedBIMLog.MakeMesh
 
             foreach (GeometryObject geomObj in geomElem)
             {
-                if (geomObj is GeometryInstance geomInst) 
+                if (geomObj is GeometryInstance geomInst)
                 {
                     ProcessGeometryInstance(doc, job, geomInst, matList, matInfo, materialDict, indexDict, verticesDict, indicesDict);
                 }
@@ -193,7 +193,7 @@ namespace AdvancedBIMLog.MakeMesh
         {
             foreach (Face face in solid.Faces)
             {
-                Autodesk.Revit.DB.Material m = doc.GetElement(face.MaterialElementId) as Autodesk.Revit.DB.Material;
+                Material m = doc.GetElement(face.MaterialElementId) as Material;
                 string mName = m?.Name ?? "Default material";
                 int mTransparency = m?.Transparency ?? 0;
                 JArray mColor = m != null ? new JArray(m.Color.Red, m.Color.Green, m.Color.Blue) : new JArray(128, 128, 128);

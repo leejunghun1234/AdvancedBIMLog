@@ -7,11 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AdvancedBIMLog.Mesh
+namespace AdvancedBIMLog.Make
 {
     internal class MakeLog
     {
-        public static JObject ExtractLog(Autodesk.Revit.DB.Document doc, string cmd, ElementId eid, string eidString, string timestamp)
+        public static JObject ExtractLog(Document doc, string cmd, ElementId eid, string eidString, string timestamp)
         {
             JObject job = [];
             Element elem = doc.GetElement(eid);
@@ -32,7 +32,7 @@ namespace AdvancedBIMLog.Mesh
             {
                 string cat = elem.Category.BuiltInCategory.ToString();
                 GetInfo.GetParameter(elem, parameter);
-                
+
                 if (cat == "OST_Walls")
                 {
                     ExtractWallInformation(doc, elem, geometry, property);
@@ -84,9 +84,9 @@ namespace AdvancedBIMLog.Mesh
         }
 
         static void ExtractWallInformation(
-            Autodesk.Revit.DB.Document doc, 
-            Element elem, 
-            JObject geometry, 
+            Document doc,
+            Element elem,
+            JObject geometry,
             JObject property)
         {
             if (elem is not Wall wall) return;
@@ -127,7 +127,7 @@ namespace AdvancedBIMLog.Mesh
         }
 
         static void ExtractFloorInformation(
-            Autodesk.Revit.DB.Document doc,
+            Document doc,
             Element elem,
             JObject geometry,
             JObject property)
@@ -153,7 +153,7 @@ namespace AdvancedBIMLog.Mesh
                     if (curve != null)
                         floorSlopeArrow = GetInfo.GetCurveDescription(curve);
 
-                    IList<Autodesk.Revit.DB.Parameter> parameters = ((ModelLine)doc.GetElement(floorEid)).GetOrderedParameters();
+                    IList<Parameter> parameters = ((ModelLine)doc.GetElement(floorEid)).GetOrderedParameters();
                     if (parameters != null)
                     {
                         foreach (var param in parameters)
@@ -185,9 +185,9 @@ namespace AdvancedBIMLog.Mesh
             // 스팬 방향
             geometry["SpanDirection"] = floorSpanDirection.HasValues ? floorSpanDirection : "None";
         }
-        
+
         static void ExtractRoofInformation(
-            Autodesk.Revit.DB.Document doc,
+            Document doc,
             Element elem,
             JObject geometry,
             JObject property,
@@ -196,7 +196,7 @@ namespace AdvancedBIMLog.Mesh
             if (elem is FootPrintRoof fpRoof)
             {
                 cat = "Roofs: FootPrintRoof";
-                 
+
                 // Sketch 추출
                 ElementClassFilter roofSktFilter = new ElementClassFilter(typeof(Sketch));
                 ICollection<ElementId> sketchIds = fpRoof.GetDependentElements(roofSktFilter);
@@ -233,7 +233,7 @@ namespace AdvancedBIMLog.Mesh
         }
 
         static void ExtractCeilingInformation(
-            Autodesk.Revit.DB.Document doc,
+            Document doc,
             Element elem,
             JObject geometry,
             JObject property)
@@ -289,9 +289,9 @@ namespace AdvancedBIMLog.Mesh
                 geometry["SlopeArrow"] = "None";
             }
         }
-    
+
         static void ExtractWDInformation(
-            Autodesk.Revit.DB.Document doc,
+            Document doc,
             Element elem,
             JObject geometry,
             JObject property)
@@ -315,7 +315,7 @@ namespace AdvancedBIMLog.Mesh
         }
 
         static void ExtractFurnitureInformation(
-            Autodesk.Revit.DB.Document doc,
+            Document doc,
             Element elem,
             JObject geometry,
             JObject property)
@@ -328,7 +328,7 @@ namespace AdvancedBIMLog.Mesh
         }
 
         static void ExtractColumnInformation(
-            Autodesk.Revit.DB.Document doc,
+            Document doc,
             Element elem,
             JObject geometry,
             JObject property)
@@ -340,7 +340,7 @@ namespace AdvancedBIMLog.Mesh
         }
 
         static void ExtractStructuralColumnInformation(
-            Autodesk.Revit.DB.Document doc,
+            Document doc,
             Element elem,
             JObject geometry,
             JObject property)

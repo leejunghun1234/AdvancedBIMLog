@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Autodesk.Revit;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using LogShape;
 using Newtonsoft.Json.Linq;
@@ -76,6 +77,15 @@ namespace AdvancedBIMLog.Set
             Make.MakeJson.MakeJsonFile(timeAndListPath, timeAndListJObject);
             Make.MakeJson.MakeJsonFile(volumeGUIDPath, volumeListJObject);
             Make.MakeJson.MakeJsonFile(locationGUIDPath, locationListJObject);
+        }
+    
+        public static void SetProjectInfo(Document doc)
+        {
+            var main = new BIMLog();
+            main.userId = doc.Application.Username;
+            main.filename = doc.PathName;
+            main.creationGUID = doc.CreationGUID.ToString();
+            main.filenameShort = Path.GetFileNameWithoutExtension(main.filename);
         }
     }
 }

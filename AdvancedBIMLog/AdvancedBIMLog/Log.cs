@@ -1,6 +1,6 @@
-﻿using AdvancedBIMLog.Get;
-using AdvancedBIMLog.MakeMesh;
-using AdvancedBIMLog.Mesh;
+﻿using AdvancedBIMLog;
+using AdvancedBIMLog.Get;
+using AdvancedBIMLog.Make;
 using AdvancedBIMLog.Set;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -15,11 +15,15 @@ namespace LogShape
     [Transaction(TransactionMode.Manual)]
     public class BIMLog : IExternalApplication
     {
+        // 기본 정보
+        public string userId;
+        public string filename;
+        public string filenameShort;
+        public string creationGUID;
+
         // 로그 저장할 폴더의 경로
         public string folderPath;
-
-        // 현재 작업중인 프로젝트의 GUID
-        public string creationGUID;
+        public string tempFolderPath = "C:\\ProgramData\\Autodesk\\Revit\\temp";
 
         // 최종 파일 추출
         //
@@ -28,9 +32,9 @@ namespace LogShape
         // 로그 최종의 저장 경로
         public string jsonFile = "";
         // Time log sub
-        public JArray timelog_sub = [];
+        public List<string> timelog_sub = [];
         // Time log
-        public JObject timlog = [];
+        public JObject timelog = [];
 
         // Time log 파일 이름
         public string jsonTime = "";
@@ -65,6 +69,9 @@ namespace LogShape
         public Dictionary<string, JObject> fileAndJObject = [];
         // file GUID 에 따른 로그 파일의 저장 경로
         public Dictionary<string, string> fileAndPath = [];
+        // file GUID 에 따른 파일 이름 
+        public Dictionary<string, string> fileNameList = [];
+
 
         // 여러개의 프로젝트 동시에 켰을 때 추적용
         public Dictionary<string, List<string>> elemListList = [];
@@ -78,7 +85,7 @@ namespace LogShape
         // 로그 경로 추출
         public Dictionary<string, string> timeAndPath = []; // GUID 와 timeLog path
 
-
+        
 
         public Result OnStartup(UIControlledApplication application)
         {
@@ -121,7 +128,7 @@ namespace LogShape
             return Result.Succeeded;
         }
 
-        public void DocumentChangeTracker(object sender, DocumentChangedEventArgs e)
+        void DocumentChangeTracker(object sender, DocumentChangedEventArgs e)
         {
             var app = sender as Autodesk.Revit.ApplicationServices.Application;
             UIApplication uiapp = new UIApplication(app);
@@ -133,8 +140,8 @@ namespace LogShape
             jsonFile = fileAndPath[creationGUID];
 
             // time 별 timeLog
-            List<string> timeLog_sub = timeAndList[creationGUID];
-            JObject timeLog = timeAndJObject[creationGUID];
+            timelog_sub = timeAndList[creationGUID];
+            timelog = timeAndJObject[creationGUID];
 
             jsonTime = timeAndPath[creationGUID];
             elemList = elemListList[creationGUID]; // elemList 불러오기
@@ -173,7 +180,7 @@ namespace LogShape
                         ((JArray)jobject["ShapeLog"]).Add(addS);
 
                         elemList.Add(eidString);
-                        timeLog_sub.Add(eidString);
+                        timelog_sub.Add(eidString);
                         isChanged = true;
 
                         if (elem.Category.Name.ToString() == "Walls")
@@ -208,7 +215,7 @@ namespace LogShape
                             string wallVolume = wall.get_Parameter(BuiltInParameter.HOST_VOLUME_COMPUTED).AsValueString();
                             bool volumeCheck = volumeCheckDict[eid.ToString()] == wallVolume;
 
-                            string centerPoint = GetWallCenterPoint(wall);
+                            string centerPoint = GetCenterPoint.GetWallCenterPoint(wall);
                             bool locationCheck = locationCheckDict[eid.ToString()] == centerPoint;
                             if (volumeCheck && locationCheck)
                             {
@@ -224,7 +231,7 @@ namespace LogShape
                         string eidString = $"{eid.ToString()}_{i}";
                         while (elemList.Contains(eidString))
                         {
-                            stlog2.Remove(eidString);
+                            timelog_sub.Remove(eidString);
                             i++;
                             eidString = $"{eid.ToString()}_{i}";
                         }
@@ -234,16 +241,16 @@ namespace LogShape
                         JObject modiS = new JObject();
                         if (modinum == "1")
                         {
-                            modiS = ExportToMeshJObject(doc, elem, eidString, timestamp, "C");
+                            modiS = MakeMesh.ExportToMeshJObject(doc, elem, eidString, timestamp, "C");
                         }
                         else
                         {
-                            modiS = ExportToMeshJObject(doc, elem, eidString, timestamp, "M");
+                            modiS = MakeMesh.ExportToMeshJObject(doc, elem, eidString, timestamp, "M");
                         }
                         if (modiS == null) continue;
 
                         // 여기에 정보가 들어갈 수 있도록 -> 이걸 쓰면 되지 않을까
-                        JObject modiF = Log(doc, "M", eid, eidString, timestamp);
+                        JObject modiF = MakeLog.ExtractLog(doc, "M", eid, eidString, timestamp);
                         if (modiF != null)
                         {
                             modiS["Info"] = modiF;
@@ -260,15 +267,264 @@ namespace LogShape
                     }
                 }
             }
+
+            if (deletedElements != null)
+            {
+                foreach (ElementId eid in deletedElements)
+                {
+                    try
+                    {
+                        string eidString = $"{eid.ToString()}_1";
+                        int i = 1;
+
+                        bool isElemIn = false;
+                        while (elemList.Contains(eidString))
+                        {
+                            isElemIn = true;
+                            timelog_sub.Remove(eidString);
+                            i++;
+                            eidString = $"{eid.ToString()}_{i}";
+                        }
+                        if (isElemIn)
+                        {
+                            JObject delS = new JObject
+                            {
+                                ["ElementId"] = eid.ToString(),
+                                ["CommandType"] = "D",
+                                ["Info"] = new JObject
+                                {
+                                    ["Common"] = new JObject
+                                    {
+                                        ["Timestamp"] = timestamp,
+                                    }
+                                }
+                            };
+                            ((JArray)jobject["ShapeLog"]).Add(delS);
+                        }
+
+                        isChanged = true;
+                    }
+                    catch 
+                    {
+
+                    }
+                }
+            }
+
+            if (isChanged)
+            {
+                jobject["Saved"] = "False";
+                
+                MakeJson.MakeJsonFile(jsonFile, jobject);
+
+                JArray jarray = new JArray(timelog_sub);
+                timelog["ShapeLog"][timestamp] = jarray.DeepClone();
+                MakeJson.MakeJsonFile(jsonTime, jobject);
+            }
+        
+            // 아무것도 안바뀌었다면 Saved = False로 바꿔줘야해
         }
 
+        void DocumentCreatedTracker(object sender, DocumentCreatedEventArgs e)
+        {
+            Document doc = e.Document;
+            Set.SetProjectInfo(doc);
+            fileNameList[creationGUID] = filename;
+            var startTime = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
+            jsonFile = Path.Combine(folderPath, startTime + $"_{creationGUID}" + $"_{doc.Title}" + ".json");
+            jsonTime = Path.Combine(folderPath, startTime + $"_{creationGUID}" + $"_{doc.Title}" + "_time.json");
 
+            JObject newJObject = new JObject
+            {
+                ["UserId"] = userId,
+                ["Filename"] = filename,
+                ["CreationGUID"] = creationGUID,
+                ["StartTime"] = startTime,
+                ["EndTime"] = "",
+                ["Saved"] = "False",
+                ["ShapeLog"] = new JArray()
+            };
+            JObject newTimeJObject = new JObject
+            {
+                ["UserId"] = userId,
+                ["Filename"] = filename,
+                ["CreationGUID"] = creationGUID,
+                ["StartTime"] = startTime,
+                ["EndTime"] = "",
+                ["Saved"] = "False",
+                ["ShapeLog"] = new JObject()
+            };
 
+            fileAndPath[creationGUID] = jsonFile;
+            fileAndJObject[creationGUID] = newJObject;
 
+            timeAndPath[creationGUID] = jsonTime;
+            timeAndJObject[creationGUID] = newTimeJObject;
 
+            // 이 때는 처음 create 하니까 만드는게 맞는데 open을 할 때에는 불러와야지. 저장할 때 같이 이 파일 저장하고
+            elemListList[creationGUID] = new List<string>();
+            timeAndList[creationGUID] = new List<string>();
 
+            volumeGUID[creationGUID] = new Dictionary<string, string>();
+            locationGUID[creationGUID] = new Dictionary<string, string>();
 
+            MakeJson.MakeJsonFile(jsonFile, newJObject);
+            MakeJson.MakeJsonFile(jsonTime, newTimeJObject);
+        }
 
+        void DocumentOpenedTracker(object sender, DocumentOpenedEventArgs e)
+        {
+            Document doc = e.Document;
+            Set.SetProjectInfo(doc);
+            fileNameList[creationGUID] = doc.PathName.ToString();
+            var startTime = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
+            jsonFile = Path.Combine(folderPath, startTime + $"_{creationGUID}" + $"_{doc.Title}" + ".json");
+            jsonTime = Path.Combine(folderPath, startTime + $"_{creationGUID}" + $"_{doc.Title}" + "_time.json");
+
+            JObject newJObject = new JObject
+            {
+                ["UserId"] = userId,
+                ["Filename"] = filenameShort,
+                ["CreationGUID"] = creationGUID,
+                ["StartTime"] = startTime,
+                ["EndTime"] = "",
+                ["Saved"] = "False",
+                ["ShapeLog"] = new JArray()
+            };
+            JObject newTimeJObject = new JObject
+            {
+                ["UserId"] = userId,
+                ["Filename"] = filenameShort,
+                ["CreationGUID"] = creationGUID,
+                ["StartTime"] = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss"),
+                ["EndTime"] = "",
+                ["Saved"] = "False",
+                ["ShapeLog"] = new JObject()
+            };
+
+            fileAndPath[creationGUID] = jsonFile;
+            fileAndJObject[creationGUID] = newJObject;
+
+            timeAndPath[creationGUID] = jsonTime;
+            timeAndJObject[creationGUID] = newTimeJObject;
+
+            MakeJson.MakeJsonFile(jsonFile, newJObject);
+            MakeJson.MakeJsonFile(jsonTime, newTimeJObject);
+
+            string elemListListPath = tempFolderPath + $"\\{creationGUID}_elemListList.json";
+            string timeAndListPath = tempFolderPath + $"\\{creationGUID}_timeAndList.json";
+            string volumeGUIDPath = tempFolderPath + $"\\{creationGUID}_volumeGUID.json";
+            string locationGUIDPath = tempFolderPath + $"\\{creationGUID}_locationGUID.json";
+
+            string elemListListString = File.ReadAllText(elemListListPath);
+            string timeAndListString = File.ReadAllText(timeAndListPath);
+            string volumeGUIDString = File.ReadAllText(volumeGUIDPath);
+            string locationGUIDString = File.ReadAllText(locationGUIDPath);
+
+            JArray elemListListJArray = JArray.Parse(elemListListString);
+            JArray timeAndListJArray = JArray.Parse(timeAndListString);
+            JObject volumeGUIDJObject = JObject.Parse(volumeGUIDString);
+            JObject locationGUIDJObject = JObject.Parse(locationGUIDString);
+
+            elemListList[creationGUID] = elemListListJArray.ToObject<List<string>>();
+            timeAndList[creationGUID] = timeAndListJArray.ToObject<List<string>>();
+
+            volumeGUID[creationGUID] = volumeGUIDJObject.ToObject<Dictionary<string, string>>();
+            locationGUID[creationGUID] = locationGUIDJObject.ToObject<Dictionary<string, string>>();
+        }
+
+        void FailureTracker(object sender, FailuresProcessingEventArgs e)
+        {
+            var app = sender as Autodesk.Revit.ApplicationServices.Application;
+            UIApplication uiapp = new UIApplication(app);
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            if (uidoc != null)
+            {
+                Document doc = uidoc.Document;
+                string user = doc.Application.Username;
+                string filename = doc.PathName;
+                string filenameShort = Path.GetFileNameWithoutExtension(filename);
+
+                FailuresAccessor failuresAccessor = e.GetFailuresAccessor();
+                IList<FailureMessageAccessor> fmas = failuresAccessor.GetFailureMessages();
+            }
+        }
+
+        void DocumentClosingTracker(object sender, DocumentClosingEventArgs e)
+        {
+            Document doc = e.Document;
+            Set.SetProjectInfo(doc);
+
+            JObject sl = fileAndJObject[creationGUID];
+            JObject tl = timeAndJObject[creationGUID];
+
+            var endTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            sl["EndTime"] = endTime;
+            tl["EndTime"] = endTime;
+
+            string saved = sl["Saved"].ToString();
+            if (saved == "" || saved == "False")
+            {
+                MakeJson.MakeJsonFile(jsonFile, sl);
+                MakeJson.MakeJsonFile(jsonTime, tl);
+            }
+        }
+
+        void DocumentSavedAsTracker(object sender, DocumentSavedAsEventArgs e)
+        {
+            Document doc = e.Document;
+
+            string filename = doc.PathName;
+            string filenameShort = Path.GetFileNameWithoutExtension (filename);
+
+            string extension = GetInfo.GetProjectInfo(doc);
+
+            jsonFile = extension + $"_{doc.Title}_saved.json";
+            jsonTime = extension + $"_{doc.Title}_time_saved.json";
+
+            var savedTime = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
+
+            jobject["Filename"] = filenameShort;
+            jobject["Saved"] = "True";
+            jobject["EndTime"] = savedTime;
+
+            timelog["Filename"] = filenameShort;
+            timelog["Saved"] = "True";
+            timelog["EndTime"] = savedTime;
+
+            if (fileNameList[$"{doc.CreationGUID}"] != filename)
+            {
+                MakeJson.MakeJsonFile(jsonFile, jobject);
+                MakeJson.MakeJsonFile(jsonTime, timelog);
+
+                Set.SetTempPath(tempFolderPath, doc.CreationGUID.ToString());
+            }
+        }
+
+        void DocumentSavingTracker(object sender, DocumentSavingEventArgs e)
+        {
+            Document doc = e.Document;
+
+            string extension = GetInfo.GetProjectInfo(doc);
+
+            jsonFile = extension + $"_{doc.Title}_saved.json";
+            jsonTime = extension + $"_{doc.Title}_time_saved.json";
+
+            var savedTime = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
+
+            jobject["Filename"] = filenameShort;
+            jobject["Saved"] = "True";
+            jobject["EndTime"] = savedTime;
+
+            timelog["Filename"] = filenameShort;
+            timelog["Saved"] = "True";
+            timelog["EndTime"] = savedTime;
+
+            MakeJson.MakeJsonFile(jsonFile, jobject);
+            MakeJson.MakeJsonFile(jsonTime, timelog);
+
+            Set.SetTempPath(tempFolderPath, doc.CreationGUID.ToString());
+        }
 
         public bool CheckElemPossible(Document doc, Element elem)
         {
