@@ -72,10 +72,10 @@ namespace AdvancedBIMLog.Set
             JObject volumeListJObject = JObject.FromObject(main.volumeGUID[creationGUID]);
             JObject locationListJObject = JObject.FromObject(main.locationGUID[creationGUID]);
 
-            MakeJsonFile(elemListListPath, elemListJObject);
-            MakeJsonFile(timeAndListPath, timeAndListJObject);
-            MakeJsonFile(volumeGUIDPath, volumeListJObject);
-            MakeJsonFile(locationGUIDPath, locationListJObject);
+            Make.MakeJson.MakeJsonFile(elemListListPath, elemListJObject);
+            Make.MakeJson.MakeJsonFile(timeAndListPath, timeAndListJObject);
+            Make.MakeJson.MakeJsonFile(volumeGUIDPath, volumeListJObject);
+            Make.MakeJson.MakeJsonFile(locationGUIDPath, locationListJObject);
         }
     }
 }

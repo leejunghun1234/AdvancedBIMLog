@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AdvancedBIMLog.Make
 {
-    internal class Make
+    internal class MakeJson
     {
         public static void MakeJsonFile(string filePath, JObject jsonfile)
         {
@@ -19,7 +19,5 @@ namespace AdvancedBIMLog.Make
         {
             File.WriteAllText(filePath, JsonConvert.SerializeObject(jsonfile, Formatting.Indented), System.Text.Encoding.UTF8);
         }
-
-
     }
 }

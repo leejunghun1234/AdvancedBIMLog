@@ -1,4 +1,7 @@
-﻿using AdvancedBIMLog.Set;
+﻿using AdvancedBIMLog.Get;
+using AdvancedBIMLog.MakeMesh;
+using AdvancedBIMLog.Mesh;
+using AdvancedBIMLog.Set;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
@@ -22,10 +25,16 @@ namespace LogShape
         //
         // 로그 최종
         public JObject jobject = [];
-        // Time log 파일 이름
-        public string jsonTime = "";
         // 로그 최종의 저장 경로
         public string jsonFile = "";
+        // Time log sub
+        public JArray timelog_sub = [];
+        // Time log
+        public JObject timlog = [];
+
+        // Time log 파일 이름
+        public string jsonTime = "";
+        
 
         // 객체 추적
         //
@@ -149,22 +158,22 @@ namespace LogShape
                     {
                         Element elem = doc.GetElement(eid);
                         if (!CheckElemPossible(doc, elem)) continue; // elemCategory 안에 해당되는 element인지 확인하고 만약 아니라면 continue
-
+                        
                         string eidString = $"{eid.ToString()}_1";
-                        JObject addS = ExportToMeshJObject(doc, elem, eidString, timestamp, "C");
+                        JObject addS = MakeMesh.ExportToMeshJObject(doc, elem, eidString, timestamp, "C");
                         if (addS == null) continue; // mesh 정보를 뽑을 수 없다면 continue
 
                         // 여기에 정보가 들어갈 수 있도록 -> 이걸 쓰면 되지 않을까
-                        JObject addF = Log(doc, "C", eid, eidString, timestamp);
+                        JObject addF = MakeLog.ExtractLog(doc, "C", eid, eidString, timestamp);
                         if (addF != null)
                         {
                             addS["Info"] = addF;
                         }
-
+                        
                         ((JArray)jobject["ShapeLog"]).Add(addS);
 
                         elemList.Add(eidString);
-                        stlog2.Add(eidString);
+                        timeLog_sub.Add(eidString);
                         isChanged = true;
 
                         if (elem.Category.Name.ToString() == "Walls")
@@ -172,8 +181,8 @@ namespace LogShape
                             Wall wall = elem as Wall;
                             string wallVolume = elem.get_Parameter(BuiltInParameter.HOST_VOLUME_COMPUTED).AsValueString();
                             volumeCheckDict[eid.ToString()] = wallVolume;
-
-                            string centerPoint = GetWallCenterPoint(wall);
+                            
+                            string centerPoint = GetCenterPoint.GetWallCenterPoint(wall);
                             locationCheckDict[eid.ToString()] = centerPoint;
                         }
                     }
@@ -181,6 +190,74 @@ namespace LogShape
                 catch
                 {
 
+                }
+            }
+            if (modifiedElements != null)
+            {
+                foreach (ElementId eid in modifiedElements)
+                {
+                    try
+                    {
+                        Element elem = doc.GetElement(eid);
+                        if (!CheckElemPossible(doc, elem)) continue;  // elemCategory 안에 해당되는 element인지 확인하고 만약 아니라면 continue
+
+                        if (elem.Category.Name == "Walls" && ((Wall)elem).CurtainGrid == null)
+                        {
+                            Wall wall = elem as Wall;
+
+                            string wallVolume = wall.get_Parameter(BuiltInParameter.HOST_VOLUME_COMPUTED).AsValueString();
+                            bool volumeCheck = volumeCheckDict[eid.ToString()] == wallVolume;
+
+                            string centerPoint = GetWallCenterPoint(wall);
+                            bool locationCheck = locationCheckDict[eid.ToString()] == centerPoint;
+                            if (volumeCheck && locationCheck)
+                            {
+                                continue;
+                            }
+
+                            // 이건 벽의 위치 혹은 volume이 변했다는 뜻
+                            locationCheckDict[eid.ToString()] = centerPoint;
+                            volumeCheckDict[eid.ToString()] = wallVolume;
+                        }
+
+                        int i = 1;
+                        string eidString = $"{eid.ToString()}_{i}";
+                        while (elemList.Contains(eidString))
+                        {
+                            stlog2.Remove(eidString);
+                            i++;
+                            eidString = $"{eid.ToString()}_{i}";
+                        }
+                        //JObject modiS;
+                        //if ((modiS = exportToMeshJObject(doc, elem, eidString, timestamp, "M")) == null) continue;
+                        string modinum = eidString.Split('_')[1];
+                        JObject modiS = new JObject();
+                        if (modinum == "1")
+                        {
+                            modiS = ExportToMeshJObject(doc, elem, eidString, timestamp, "C");
+                        }
+                        else
+                        {
+                            modiS = ExportToMeshJObject(doc, elem, eidString, timestamp, "M");
+                        }
+                        if (modiS == null) continue;
+
+                        // 여기에 정보가 들어갈 수 있도록 -> 이걸 쓰면 되지 않을까
+                        JObject modiF = Log(doc, "M", eid, eidString, timestamp);
+                        if (modiF != null)
+                        {
+                            modiS["Info"] = modiF;
+                        }
+
+                        ((JArray)jobject["ShapeLog"]).Add(modiS);
+                        elemList.Add(eidString);
+                        timelog_sub.Add(eidString);
+                        isChanged = true;
+                    }
+                    catch
+                    {
+
+                    }
                 }
             }
         }
