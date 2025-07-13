@@ -14,23 +14,7 @@ namespace AdvancedBIMLog
     {
         public Result OnStartup(UIControlledApplication application)
         {
-            string tabName = "Add-Ins";
-            string panelName = "PostProcessing";
-
-            RibbonPanel panel = null;
-            foreach (RibbonPanel p in application.GetRibbonPanels(tabName))
-            {
-                if (p.Name == panelName)
-                {
-                    panel = p;
-                    break;
-                }
-            }
-
-            if (panel == null)
-            {
-                panel = application.CreateRibbonPanel(tabName, panelName);
-            }
+            RibbonPanel panel = application.CreateRibbonPanel(Tab.AddIns, "PostProcessing");
 
             string thisAssemblyPath = Assembly.GetExecutingAssembly().Location;
             PushButtonData buttonData = new PushButtonData(

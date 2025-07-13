@@ -9,6 +9,7 @@ using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Diagnostics;
 
 namespace LogShape
 {
@@ -89,7 +90,7 @@ namespace LogShape
         {
             try
             {
-                if (string.IsNullOrEmpty(folderPath)) Set.SetLogPath(); // 파일 경로 지정해주기
+                if (string.IsNullOrEmpty(folderPath)) SetLogPath(); // 파일 경로 지정해주기
                 if (folderPath == null) return Result.Failed;                    // 경로 생성 오류시
 
                 application.ControlledApplication.DocumentChanged += new EventHandler<DocumentChangedEventArgs>(DocumentChangeTracker);
@@ -326,7 +327,7 @@ namespace LogShape
         void DocumentCreatedTracker(object sender, DocumentCreatedEventArgs e)
         {
             Document doc = e.Document;
-            Set.SetProjectInfo(doc);
+            SetProjectInfo(doc);
             fileNameList[creationGUID] = filename;
             var startTime = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
             jsonFile = Path.Combine(folderPath, startTime + $"_{creationGUID}" + $"_{doc.Title}" + ".json");
@@ -373,7 +374,7 @@ namespace LogShape
         void DocumentOpenedTracker(object sender, DocumentOpenedEventArgs e)
         {
             Document doc = e.Document;
-            Set.SetProjectInfo(doc);
+            SetProjectInfo(doc);
             fileNameList[creationGUID] = doc.PathName.ToString();
             var startTime = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
             jsonFile = Path.Combine(folderPath, startTime + $"_{creationGUID}" + $"_{doc.Title}" + ".json");
@@ -451,7 +452,7 @@ namespace LogShape
         void DocumentClosingTracker(object sender, DocumentClosingEventArgs e)
         {
             Document doc = e.Document;
-            Set.SetProjectInfo(doc);
+            SetProjectInfo(doc);
 
             JObject sl = fileAndJObject[creationGUID];
             JObject tl = timeAndJObject[creationGUID];
@@ -475,7 +476,7 @@ namespace LogShape
             string filename = doc.PathName;
             string filenameShort = Path.GetFileNameWithoutExtension (filename);
 
-            string extension = GetInfo.GetProjectInfo(doc);
+            string extension = GetProjectInfo(doc);
 
             jsonFile = extension + $"_{doc.Title}_saved.json";
             jsonTime = extension + $"_{doc.Title}_time_saved.json";
@@ -495,7 +496,7 @@ namespace LogShape
                 MakeJson.MakeJsonFile(jsonFile, jobject);
                 MakeJson.MakeJsonFile(jsonTime, timelog);
 
-                Set.SetTempPath(tempFolderPath, doc.CreationGUID.ToString());
+                SetTempPath(tempFolderPath, doc.CreationGUID.ToString());
             }
         }
 
@@ -503,7 +504,7 @@ namespace LogShape
         {
             Document doc = e.Document;
 
-            string extension = GetInfo.GetProjectInfo(doc);
+            string extension = GetProjectInfo(doc);
 
             jsonFile = extension + $"_{doc.Title}_saved.json";
             jsonTime = extension + $"_{doc.Title}_time_saved.json";
@@ -521,7 +522,7 @@ namespace LogShape
             MakeJson.MakeJsonFile(jsonFile, jobject);
             MakeJson.MakeJsonFile(jsonTime, timelog);
 
-            Set.SetTempPath(tempFolderPath, doc.CreationGUID.ToString());
+            SetTempPath(tempFolderPath, doc.CreationGUID.ToString());
         }
 
         public bool CheckElemPossible(Document doc, Element elem)
@@ -562,6 +563,95 @@ namespace LogShape
             }
             if (!elemCatList.Contains(elem.Category.BuiltInCategory)) return false;
             return true;
+        }
+    
+        void SetLogPath()
+        {
+            try
+            {
+                FileInfo fi = new FileInfo("C:\\ProgramData\\Autodesk\\Revit\\ABL_Directory.txt");
+                if (fi.Exists)
+                {
+                    string logFilePath = "C:\\ProgramData\\Autodesk\\Revit";
+                    string pathFile = Path.Combine(logFilePath, "ABL_Directory.txt");
+                    using (StreamReader readtext = new StreamReader(pathFile, true))
+                    {
+                        folderPath = readtext.ReadLine();
+                    }
+                }
+                else
+                {
+                    System.Windows.Forms.FolderBrowserDialog folderBrowser = new System.Windows.Forms.FolderBrowserDialog();
+                    folderBrowser.Description = "Select a folder to save Revit Modeling shape log path";
+                    folderBrowser.ShowNewFolderButton = true;
+                    if (folderBrowser.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    {
+                        folderPath = folderBrowser.SelectedPath;
+                        string LogFilePath = "C:\\ProgramData\\Autodesk\\Revit";
+                        string pathFile = Path.Combine(LogFilePath, "ABL_Directory.txt");
+                        using (StreamWriter writetext = new StreamWriter(pathFile, true))
+                        {
+                            writetext.WriteLine(folderPath);
+                        }
+                    }
+                }
+
+                if (!Directory.Exists(tempFolderPath))
+                {
+                    Debug.WriteLine(tempFolderPath);
+                    Directory.CreateDirectory(tempFolderPath);
+                }
+            }
+            catch
+            {
+                Autodesk.Revit.UI.TaskDialog.Show("파일 경로 오류", "파일 경로 오류");
+            }
+        }
+
+        void SetTempPath(string extension, string creationGUID)
+        {
+            string elemListListPath = extension + $"\\{creationGUID}_elemListList.json";
+            string timeAndListPath = extension + $"\\{creationGUID}_timeAndList.json";
+            string volumeGUIDPath = extension + $"\\{creationGUID}_volumeGUID.json";
+            string locationGUIDPath = extension + $"\\{creationGUID}_locationGUID.json";
+
+            JArray elemListJObject = JArray.FromObject(elemListList[creationGUID]);
+            JArray timeAndListJObject = JArray.FromObject(timeAndList[creationGUID]);
+            JObject volumeListJObject = JObject.FromObject(volumeGUID[creationGUID]);
+            JObject locationListJObject = JObject.FromObject(locationGUID[creationGUID]);
+
+            MakeJson.MakeJsonFile(elemListListPath, elemListJObject);
+            MakeJson.MakeJsonFile(timeAndListPath, timeAndListJObject);
+            MakeJson.MakeJsonFile(volumeGUIDPath, volumeListJObject);
+            MakeJson.MakeJsonFile(locationGUIDPath, locationListJObject);
+        }
+
+        void SetProjectInfo(Document doc)
+        {
+            userId = doc.Application.Username;
+            filename = doc.PathName;
+            creationGUID = doc.CreationGUID.ToString();
+            filenameShort = Path.GetFileNameWithoutExtension(filename);
+        }
+
+        string GetProjectInfo(Document doc)
+        {
+            userId = doc.Application.Username;
+            string filename = doc.PathName;
+            BasicFileInfo info = BasicFileInfo.Extract(filename);
+
+            DocumentVersion v = info.GetDocumentVersion();
+            string projectId = v.VersionGUID.ToString();
+
+            jsonFile = fileAndPath[$"{doc.CreationGUID}"];
+            jobject = fileAndJObject[$"{doc.CreationGUID}"];
+            timelog = timeAndJObject[$"{doc.CreationGUID}"];
+            timelog_sub = timeAndList[$"{doc.CreationGUID}"];
+
+            string index = folderPath + "\\" + DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss") + $"_{doc.CreationGUID}";
+            string extension = jsonFile.Substring(0, index.Length);
+
+            return extension;
         }
     }
 }

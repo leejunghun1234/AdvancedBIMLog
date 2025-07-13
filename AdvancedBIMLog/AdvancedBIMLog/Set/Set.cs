@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -25,7 +26,7 @@ namespace AdvancedBIMLog.Set
 
             try
             {
-                FileInfo fi = new FileInfo("C:\\ProgramData\\Autodesk\\Revit\\BIG_shapeLogDirectory.txt");
+                FileInfo fi = new FileInfo("C:\\ProgramData\\Autodesk\\Revit\\ABL_Directory.txt");
                 if (fi.Exists)
                 {
                     string logFilePath = "C:\\ProgramData\\Autodesk\\Revit";
@@ -54,6 +55,7 @@ namespace AdvancedBIMLog.Set
 
                 if (!Directory.Exists(main.tempFolderPath))
                 {
+                    Debug.WriteLine(main.tempFolderPath);
                     Directory.CreateDirectory(main.tempFolderPath);
                 }
             }
@@ -92,5 +94,7 @@ namespace AdvancedBIMLog.Set
             main.creationGUID = doc.CreationGUID.ToString();
             main.filenameShort = Path.GetFileNameWithoutExtension(main.filename);
         }
+
+        
     }
 }
