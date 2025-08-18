@@ -26,10 +26,6 @@ namespace AdvancedBIMLog.PostProcessing
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document doc = uidoc.Document;
 
-            // 로그가 저장된 폴더
-            var main = new BIMLog();
-            string logFolderPath = main.folderPath;
-
             // 최종 로그가 저장될 폴더
             string finalPath = "C:\\ProgramData\\Autodesk\\Revit\\FinalLog";
             if (!Directory.Exists(finalPath))
@@ -51,6 +47,15 @@ namespace AdvancedBIMLog.PostProcessing
             bool check = false;
             try
             {
+                FileInfo fi = new FileInfo("C:\\ProgramData\\Autodesk\\Revit\\ABL_Directory.txt");
+                string logFolderPath;
+                string logFilePath = "C:\\ProgramData\\Autodesk\\Revit";
+                string pathFile = Path.Combine(logFilePath, "ABL_Directory.txt");
+                using (StreamReader readtext = new StreamReader(pathFile, true))
+                {
+                    logFolderPath = readtext.ReadLine();
+                }
+
                 var logFiles = Directory.GetFiles(logFolderPath)
                     .OrderBy(lf => Path.GetFileName(lf))
                     .ToArray();

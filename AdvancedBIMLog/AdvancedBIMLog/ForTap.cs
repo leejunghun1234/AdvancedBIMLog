@@ -14,7 +14,7 @@ namespace AdvancedBIMLog
     {
         public Result OnStartup(UIControlledApplication application)
         {
-            RibbonPanel panel = application.CreateRibbonPanel(Tab.AddIns, "PostProcessing");
+            RibbonPanel panel = application.CreateRibbonPanel(Tab.AddIns, "Design Patching");
 
             string thisAssemblyPath = Assembly.GetExecutingAssembly().Location;
             PushButtonData buttonData = new PushButtonData(
@@ -24,8 +24,18 @@ namespace AdvancedBIMLog
                 "AdvancedBIMLog.PostProcessing.Command" // IExternalCommand 클래스 경로
             );
 
-            PushButton button = panel.AddItem(buttonData) as PushButton;
-            button.ToolTip = "도구 설명을 여기에 작성하세요";
+            PushButtonData buttonData2 = new PushButtonData(
+                "Button_2",
+                "Patching",
+                thisAssemblyPath,
+                "AdvancedBIMLog.Patching.Patching"
+            );
+
+            PushButton button1 = panel.AddItem(buttonData) as PushButton;
+            button1.ToolTip = "도구 설명을 여기에 작성하세요";
+
+            PushButton button2 = panel.AddItem(buttonData2) as PushButton;
+            button2.ToolTip = "도구 설명을 여기다가 쓰면 돼";
 
             return Result.Succeeded;
         }
