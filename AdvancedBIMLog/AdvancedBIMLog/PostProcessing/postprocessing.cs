@@ -26,8 +26,8 @@ namespace AdvancedBIMLog.PostProcessing
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document doc = uidoc.Document;
 
-            // 최종 로그가 저장될 폴더
-            string finalPath = "C:\\ProgramData\\Autodesk\\Revit\\FinalLog";
+            // 최종 로그가 저장될 폴더 C:\Users\dlwjd\Desktop\Final Web\finalLogs
+            string finalPath = "C:\\Users\\dlwjd\\OneDrive\\Desktop\\로그\\최종로그";
             if (!Directory.Exists(finalPath))
             {
                 Directory.CreateDirectory(finalPath);
