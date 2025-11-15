@@ -43,12 +43,12 @@ namespace AdvancedBIMLog
                 "AdvancedBIMLog.Patching.Patching"
             );
 
-            //PushButtonData buttonData3 = new PushButtonData(
-            //    "Button_3",
-            //    "Export Element",
-            //    thisAssemblyPath,
-            //    "AdvancedBIMLog.Export.Export"
-            //);
+            PushButtonData buttonData3 = new PushButtonData(
+                "Button_3",
+                "Export Element",
+                thisAssemblyPath,
+                "AdvancedBIMLog.Export.Export"
+            );
 
             PushButton button1 = panel.AddItem(buttonData) as PushButton;
             button1.ToolTip = "도구 설명을 여기에 작성하세요";
@@ -62,9 +62,9 @@ namespace AdvancedBIMLog
             button2.ToolTip = "도구 설명을 여기다가 쓰면 돼";
             button2.LargeImage = GetImageSource(@"C:\Users\dlwjd\Desktop\gitTest\AdvancedBIMLog\AdvancedBIMLog\AdvancedBIMLog\Resources\hama1 (3).png");
 
-            //PushButton button3 = panel.AddItem(buttonData3) as PushButton;
-            //button3.ToolTip = "도구 설명을 여기다가 쓰면 돼";
-            //button3.LargeImage = GetImageSource(@"C:\Users\dlwjd\Desktop\gitTest\AdvancedBIMLog\AdvancedBIMLog\AdvancedBIMLog\Resources\hama1.png");
+            PushButton button3 = panel.AddItem(buttonData3) as PushButton;
+            button3.ToolTip = "도구 설명을 여기다가 쓰면 돼";
+            button3.LargeImage = GetImageSource(@"C:\Users\dlwjd\Desktop\gitTest\AdvancedBIMLog\AdvancedBIMLog\AdvancedBIMLog\Resources\hama1.png");
 
             //PushButtonData buttonData3 = new PushButtonData(
             //    "Button_3",
