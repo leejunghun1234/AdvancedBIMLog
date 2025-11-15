@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ namespace AdvancedBIMLog.Make
         {
             File.WriteAllText(filePath, JsonConvert.SerializeObject(jsonfile, Formatting.Indented), System.Text.Encoding.UTF8);
         }
-
+        
         public static void MakeJsonFile(string filePath, JArray jsonfile)
         {
             File.WriteAllText(filePath, JsonConvert.SerializeObject(jsonfile, Formatting.Indented), System.Text.Encoding.UTF8);

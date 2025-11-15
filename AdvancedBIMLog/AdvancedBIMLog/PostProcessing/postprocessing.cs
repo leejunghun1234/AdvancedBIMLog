@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -32,7 +33,7 @@ namespace AdvancedBIMLog.PostProcessing
             {
                 Directory.CreateDirectory(finalPath);
             }
-
+            
             // 해당 프로젝트 GUID
             string projectGUID = doc.CreationGUID.ToString();
 
@@ -41,6 +42,7 @@ namespace AdvancedBIMLog.PostProcessing
             JObject timeLogs = new JObject();
 
             JObject shapeLogsT = [];
+            HashSet<string> logChecker = new HashSet<string>(StringComparer.Ordinal);
 
             string lastTime = "";
 
@@ -78,6 +80,13 @@ namespace AdvancedBIMLog.PostProcessing
                             JArray shapeLog = (JArray)logJObject["ShapeLog"];
                             foreach (var log in shapeLog)
                             {
+                                var id = (string)log["Info"]?["Common"]?["ElementId"];
+                                if (logChecker.Contains(id))
+                                {
+                                    Debug.WriteLine("중복 로그", $"ElementId {id} is duplicated.");
+                                    continue;
+                                }
+                                logChecker.Add(id);
                                 shapeLogs.Add(log);
 
                                 if ((string)log["CommandType"] == "D") continue;
@@ -368,56 +377,58 @@ namespace AdvancedBIMLog.PostProcessing
 
             foreach (var prop in ((JObject)timeLogs[lastTime]["Quantity"]).Properties())
             {
-                string testtesttest = Path.Combine(finalPath, $"{prop.Name}.csv");
+                string tempCsvName = Path.Combine(finalPath, $"{prop.Name}.csv"); // 원본 파일 이름 (이제 저장 X)
 
-                using (StreamWriter writer = new StreamWriter(testtesttest))
+                List<string> lines = new(); // ⬅ 원본 CSV를 여기에만 저장 (파일로 쓰지 않음)
+
+                // 1. 헤더 추출
+                StringBuilder catToCsv = new StringBuilder();
+                var catValues = timeLogs[lastTime]["Quantity"][prop.Name];
+                List<string> indexChecker = new List<string>();
+
+                foreach (var prop2 in ((JObject)catValues).Properties())
                 {
-                    StringBuilder catToCsv = new StringBuilder();
-                    var catValues = timeLogs[lastTime]["Quantity"][prop.Name];
-                    List<string> indexChecker = new List<string>();
-
-                    foreach (var prop2 in ((JObject)catValues).Properties())
-                    {
-                        string columnName = prop2.Name.Replace(", ", "_");
-                        indexChecker.Add(columnName);
-                        catToCsv.Append(columnName + ", ");
-                    }
-
-                    writer.WriteLine(catToCsv.ToString().TrimEnd(',', ' '));
-
-                    foreach (var t in timeLogs.Properties())
-                    {
-                        StringBuilder catToCsv2 = new StringBuilder();
-                        Dictionary<string, string> rowValues = new Dictionary<string, string>();
-
-                        foreach (var ts in ((JObject)timeLogs[t.Name]["Quantity"][prop.Name]).Properties())
-                        {
-                            string columnName2 = ts.Name.Replace(", ", "_");
-                            rowValues[columnName2] = ts.Value.ToString();
-                        }
-
-                        foreach (var column in indexChecker)
-                        {
-                            catToCsv2.Append(rowValues.ContainsKey(column) ? rowValues[column] + ", " : "0, ");
-                        }
-
-                        writer.WriteLine(catToCsv2.ToString().TrimEnd(',', ' ').TrimEnd('\n', ' '));
-                    }
+                    string columnName = prop2.Name.Replace(", ", "_");
+                    indexChecker.Add(columnName);
+                    catToCsv.Append(columnName + ", ");
                 }
 
-                // CSV 파일 읽기
-                var lines = File.ReadAllLines(testtesttest);
-                var csvData = lines.Select(line => line.Split(',')).ToArray();
+                lines.Add(catToCsv.ToString().TrimEnd(',', ' ')); // 헤더 행 추가
 
-                // 행과 열 전치
+                // 2. 각 시간 단계에 대해 행 추가
+                foreach (var t in timeLogs.Properties())
+                {
+                    StringBuilder catToCsv2 = new StringBuilder();
+                    Dictionary<string, string> rowValues = new Dictionary<string, string>();
+
+                    foreach (var ts in ((JObject)timeLogs[t.Name]["Quantity"][prop.Name]).Properties())
+                    {
+                        string columnName2 = ts.Name.Replace(", ", "_");
+                        rowValues[columnName2] = ts.Value.ToString();
+                    }
+
+                    foreach (var column in indexChecker)
+                    {
+                        catToCsv2.Append(rowValues.ContainsKey(column) ? rowValues[column] + ", " : "0, ");
+                    }
+
+                    lines.Add(catToCsv2.ToString().TrimEnd(',', ' ').TrimEnd('\n', ' '));
+                }
+
+                // 3. 전치
+                var csvData = lines.Select(line => line.Split(',')).ToArray();
                 var transposedData = Transpose(csvData);
+
+                //// CSV 파일 읽기
+                //var lines = File.ReadAllLines(testtesttest);
+                //var csvData = lines.Select(line => line.Split(',')).ToArray();
+
+                //// 행과 열 전치
+                //var transposedData = Transpose(csvData);
 
                 // 새로운 CSV 파일 저장
                 string quantCSV = Path.Combine(finalPath, $"{prop.Name}_test.csv");
                 File.WriteAllLines(quantCSV, transposedData.Select(row => string.Join(", ", row)));
-
-                string unityPath = Path.Combine("C:\\Users\\dlwjd\\Desktop\\Unity Visualization\\Visualization\\Assets\\StreamingAssets\\", $"{prop.Name}.csv");
-                File.WriteAllLines(unityPath, transposedData.Select(row => string.Join(", ", row)));
             }
 
             string finalShapePath = Path.Combine(finalPath, "AdvancedBIMLog_SL.json");
@@ -428,9 +439,6 @@ namespace AdvancedBIMLog.PostProcessing
 
             File.WriteAllText(finalShapePath, JsonConvert.SerializeObject(shapeLogs, Formatting.Indented), System.Text.Encoding.UTF8);
             File.WriteAllText(finalTimePath, JsonConvert.SerializeObject(timeLogs, Formatting.Indented), System.Text.Encoding.UTF8);
-
-            File.WriteAllText("C:\\Users\\dlwjd\\Desktop\\Unity Visualization\\Visualization\\Assets\\StreamingAssets\\shapeLogs1.json", JsonConvert.SerializeObject(shapeLogs, Formatting.Indented), System.Text.Encoding.UTF8);
-            File.WriteAllText("C:\\Users\\dlwjd\\Desktop\\Unity Visualization\\Visualization\\Assets\\StreamingAssets\\timeLogs1.json", JsonConvert.SerializeObject(timeLogs, Formatting.Indented), System.Text.Encoding.UTF8);
 
             Autodesk.Revit.UI.TaskDialog.Show("Complete", "Complete PostProcessing");
 

@@ -68,7 +68,12 @@ namespace AdvancedBIMLog.Patching.Functions
             JObject elementDict)
         {
             JObject parameter;
-            if (log.ContainsKey("Parameter"))
+            Debug.WriteLine(log);
+            if (log.ContainsKey("Info"))
+            {
+                parameter = (JObject)log["Info"]["Parameter"];
+            }
+            else if (log.ContainsKey("Parameter"))
             {
                 parameter = (JObject)log["Parameter"];
             }
@@ -76,7 +81,7 @@ namespace AdvancedBIMLog.Patching.Functions
             {
                 parameter = (JObject)log["ModifiedParameter"];
             }
-
+            
             JObject builtInParams;
             if (parameter.ContainsKey("Built-In"))
             {

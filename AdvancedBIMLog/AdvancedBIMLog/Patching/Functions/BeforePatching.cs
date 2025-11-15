@@ -2,6 +2,8 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,7 +24,7 @@ namespace AdvancedBIMLog.Patching.Functions
             rlog = [];
             newJson = [];
 
-
+            
             using (StreamReader file = File.OpenText(logPath))
             using (JsonTextReader reader = new JsonTextReader(file))
             {
@@ -33,6 +35,7 @@ namespace AdvancedBIMLog.Patching.Functions
                 {
                     log.Remove("Meshes");
                     string elementId = log["ElementId"].ToString();
+                    
                     string command = log["CommandType"].ToString();
 
                     if ((string)log["Info"]["Common"]["ElementCategory"] == "Curtain Walls") continue;
@@ -71,7 +74,10 @@ namespace AdvancedBIMLog.Patching.Functions
                                     if (log["Info"]["Geometry"]["HostId"].ToString() == hostElem ||
                                         log["Info"]["Common"]["Timestamp"].ToString() == hostTime)
                                     {
-                                        continue;
+                                        hostElem = "";
+                                        hostTime = "";
+
+                                        //continue;
                                     }
                                 }
 
@@ -92,8 +98,8 @@ namespace AdvancedBIMLog.Patching.Functions
                                 if (!JToken.DeepEquals(newJson[elementId]["Info"]["Common"]["ElementFamily"], common["ElementFamily"]) ||
                                     !JToken.DeepEquals(newJson[elementId]["Info"]["Common"]["ElementType"], common["ElementType"]))
                                 {
-                                    modifyJson["ModifiedCommon"]["ElementFamily"] = newJson[elementId]["Info"]["Common"]["ElementFamily"];
-                                    modifyJson["ModifiedCommon"]["ElementType"] = newJson[elementId]["Info"]["Common"]["ElementType"];
+                                    modifyJson["Info"]["ModifiedCommon"]["ElementFamily"] = newJson[elementId]["Info"]["Common"]["ElementFamily"];
+                                    modifyJson["Info"]["ModifiedCommon"]["ElementType"] = newJson[elementId]["Info"]["Common"]["ElementType"];
                                 }
 
                                 JObject paraJson = (JObject)newJson[elementId]["Info"]["Parameter"];

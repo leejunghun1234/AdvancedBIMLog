@@ -75,7 +75,15 @@ namespace AdvancedBIMLog
                         ["Value"] = pValue,
                         ["ValueString"] = pAsValueString,
                     };
-                    parameter.Add($"{pDefName}", pp);
+                    try
+                    {
+                        parameter.Add($"{pDefName}", pp);
+
+                    }
+                    catch
+                    {
+
+                    }
                 }
                 
             }

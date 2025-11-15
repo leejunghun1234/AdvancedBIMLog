@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ namespace AdvancedBIMLog.Patching
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Autodesk.Revit.ApplicationServices.Application app = uiapp.Application;
             Document doc = uidoc.Document;
-
+            
             FileInfo fi = new FileInfo(@"C:\ProgramData\Autodesk\Revit\BIG_RollBack Directory.txt");
             string folderPath = "";
             if (fi.Exists)
@@ -78,8 +79,8 @@ namespace AdvancedBIMLog.Patching
                 }
             }
 
-            // 이거 직접 선택하게 바꿔줘야겠지... 
-            string logPath = @"C:\ProgramData\Autodesk\Revit\FinalLog\AdvancedBIMLog_SL.json";
+            // 이거 직접 선택하게 바꿔줘야겠지... C:\Users\dlwjd\OneDrive\Desktop\로그\최종로그
+            string logPath = @"C:\Users\dlwjd\OneDrive\Desktop\로그\최종로그\AdvancedBIMLog_SL.json";
             BeforePatching.preProcessing(
                 logPath,
                 time,
@@ -94,12 +95,13 @@ namespace AdvancedBIMLog.Patching
                 // 이전꺼 비교용 -> 실제로는 필요없어ㅣㅇㅅ
                 out JObject newJson);
 
-            //File.WriteAllText("C:\\Users\\dlwjd\\Desktop\\tester\\test1.json" +
-            //    "", JsonConvert.SerializeObject(rlog, Formatting.Indented), System.Text.Encoding.UTF8);
-            //File.WriteAllText("C:\\Users\\dlwjd\\Desktop\\tester\\test2.json" +
-            //    "", JsonConvert.SerializeObject(selectedElemLog.Reverse(), Formatting.Indented), System.Text.Encoding.UTF8);
-            //File.WriteAllText("C:\\Users\\dlwjd\\Desktop\\tester\\test3.json" +
-            //    "", JsonConvert.SerializeObject(elementIdDict, Formatting.Indented), System.Text.Encoding.UTF8);
+            // C:\Users\dlwjd\OneDrive\Desktop\로그\최종로그
+            File.WriteAllText("C:\\Users\\dlwjd\\OneDrive\\Desktop\\로그\\tester\\test1.json" +
+                "", JsonConvert.SerializeObject(rlog, Formatting.Indented), System.Text.Encoding.UTF8);
+            File.WriteAllText("C:\\Users\\dlwjd\\OneDrive\\Desktop\\로그\\tester\\test2.json" +
+                "", JsonConvert.SerializeObject(selectedElemLog.Reverse(), Formatting.Indented), System.Text.Encoding.UTF8);
+            File.WriteAllText("C:\\Users\\dlwjd\\OneDrive\\Desktop\\로그\\tester\\test3.json" +
+                "", JsonConvert.SerializeObject(elementIdDict, Formatting.Indented), System.Text.Encoding.UTF8);
 
             JArray sortedSelectedElemLog = new JArray(selectedElemLog.Reverse());
             foreach (JObject log in selectedElemLog.Reverse())

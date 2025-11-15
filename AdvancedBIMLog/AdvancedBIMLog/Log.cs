@@ -10,6 +10,7 @@ using Autodesk.Revit.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
+using System.IO;
 
 namespace LogShape
 {
@@ -61,6 +62,7 @@ namespace LogShape
             BuiltInCategory.OST_Roofs,
             BuiltInCategory.OST_Stairs,
             BuiltInCategory.OST_Railings,
+            BuiltInCategory.OST_StairsRailing,
             BuiltInCategory.OST_Furniture,
         };
 
@@ -94,7 +96,7 @@ namespace LogShape
                 if (folderPath == null) return Result.Failed;                    // 경로 생성 오류시
 
                 application.ControlledApplication.DocumentChanged += new EventHandler<DocumentChangedEventArgs>(DocumentChangeTracker);
-                application.ControlledApplication.FailuresProcessing += new EventHandler<FailuresProcessingEventArgs>(FailureTracker);
+                //application.ControlledApplication.FailuresProcessing += new EventHandler<FailuresProcessingEventArgs>(FailureTracker);
                 application.ControlledApplication.DocumentOpened += new EventHandler<DocumentOpenedEventArgs>(DocumentOpenedTracker);
                 application.ControlledApplication.DocumentCreated += new EventHandler<DocumentCreatedEventArgs>(DocumentCreatedTracker);
                 application.ControlledApplication.DocumentClosing += new EventHandler<DocumentClosingEventArgs>(DocumentClosingTracker);
@@ -113,7 +115,7 @@ namespace LogShape
             try
             {
                 application.ControlledApplication.DocumentChanged -= new EventHandler<DocumentChangedEventArgs>(DocumentChangeTracker);
-                application.ControlledApplication.FailuresProcessing -= new EventHandler<FailuresProcessingEventArgs>(FailureTracker);
+                //application.ControlledApplication.FailuresProcessing -= new EventHandler<FailuresProcessingEventArgs>(FailureTracker);
                 application.ControlledApplication.DocumentOpened -= new EventHandler<DocumentOpenedEventArgs>(DocumentOpenedTracker);
                 application.ControlledApplication.DocumentCreated -= new EventHandler<DocumentCreatedEventArgs>(DocumentCreatedTracker);
                 application.ControlledApplication.DocumentClosing -= new EventHandler<DocumentClosingEventArgs>(DocumentClosingTracker);
@@ -149,7 +151,7 @@ namespace LogShape
 
             string timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
             string filename = Path.GetFileNameWithoutExtension(doc.PathName);
-
+            
             // 변경된 객체 추적 -> 여기서는 굳이 selection 된 객체만을 대상으로 할 필요 없이 전부 해야하는거지
             ICollection<ElementId> addedElements = e.GetAddedElementIds();
             ICollection<ElementId> modifiedElements = e.GetModifiedElementIds();
@@ -547,7 +549,7 @@ namespace LogShape
             }
             if (elem.Category.BuiltInCategory == BuiltInCategory.OST_Stairs
                 && ((Stairs)elem).IsInEditMode() == false) return true;
-            if (elem.Category.BuiltInCategory == BuiltInCategory.OST_Railings
+            if (elem.Category.Name.ToString() == "Railings"
                 && ((Railing)elem).TopRail.ToString() != "-1") return true;
             if (elem.Category.BuiltInCategory == BuiltInCategory.OST_Cornices) return true;
 
