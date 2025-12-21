@@ -82,39 +82,39 @@ namespace AdvancedBIMLog.Export
                     wallInfo["Common"]["ElementFamily"] = elem.get_Parameter(BuiltInParameter.ELEM_FAMILY_PARAM).AsValueString();
                     wallInfo["Common"]["ElementType"] = elem.get_Parameter(BuiltInParameter.ELEM_TYPE_PARAM).AsValueString();
 
+                    bool wallIsProfileWall = true;
+                    JObject wallCurve = new JObject();
+
+                    Element sketchElem = doc.GetElement(wall.SketchId);
+                    if (sketchElem == null)
+                    {
+                        wallIsProfileWall = false;
+                    }
+
+                    if (wallIsProfileWall)
+                    {
+                        Sketch wallSketch = sketchElem as Sketch;
+                    }
+                    else
+                    {
+                        Curve wallLocCrv = (wall.Location as LocationCurve)?.Curve;
+                        wallCurve = GetInfo.GetCurveDescription(wallLocCrv);
+                    }
+
+                    // Orientation 정보와 구조적 여부 (추후 활용 가능)
+                    string orientation = wall.Orientation.ToString();
+                    int isStructural = wall.get_Parameter(BuiltInParameter.WALL_STRUCTURAL_SIGNIFICANT).AsInteger();
+                    bool isFlipped = wall.Flipped;
+
+                    // JSON 저장
+                    wallInfo["Geometry"]["IsProfileWall"] = wallIsProfileWall;
+                    wallInfo["Geometry"]["Curve"] = wallCurve;
+                    wallInfo["Property"]["Flipped"] = isFlipped;
+                    wallInfo["Property"]["Orientation"] = orientation;
+                    wallInfo["Property"]["IsStructural"] = isStructural;
+
                     if (wallCheck == null)
                     {
-                        bool wallIsProfileWall = true;
-                        JObject wallCurve = new JObject();
-
-                        Element sketchElem = doc.GetElement(wall.SketchId);
-                        if (sketchElem == null)
-                        {
-                            wallIsProfileWall = false;
-                        }
-
-                        if (wallIsProfileWall)
-                        {
-                            Sketch wallSketch = sketchElem as Sketch;
-                        }
-                        else
-                        {
-                            Curve wallLocCrv = (wall.Location as LocationCurve)?.Curve;
-                            wallCurve = GetInfo.GetCurveDescription(wallLocCrv);
-                        }
-
-                        // Orientation 정보와 구조적 여부 (추후 활용 가능)
-                        string orientation = wall.Orientation.ToString();
-                        int isStructural = wall.get_Parameter(BuiltInParameter.WALL_STRUCTURAL_SIGNIFICANT).AsInteger();
-                        bool isFlipped = wall.Flipped;
-
-                        // JSON 저장
-                        wallInfo["Geometry"]["IsProfileWall"] = wallIsProfileWall;
-                        wallInfo["Geometry"]["Curve"] = wallCurve;
-                        wallInfo["Property"]["Flipped"] = isFlipped;
-                        wallInfo["Property"]["Orientation"] = orientation;
-                        wallInfo["Property"]["IsStructural"] = isStructural;
-
                         answer2[elem.Id.ToString()] = wallInfo;
                         ((JArray)answer["Wall"]).Add(elem.Id.ToString());
                     }
@@ -512,6 +512,7 @@ namespace AdvancedBIMLog.Export
                     }
 
                     ((JArray)answer["Roof"]).Add(elem.Id.ToString());
+                    answer2[elem.Id.ToString()] = roofInfo;
                 }
                 else
                 {
@@ -521,9 +522,9 @@ namespace AdvancedBIMLog.Export
                 ((JArray)answer["All"]).Add(elem.Id.ToString());
             }
             
-            File.WriteAllText("C:\\Users\\dlwjd\\OneDrive\\Desktop\\로그\\tester\\export.json" +
+            File.WriteAllText("C:\\Users\\dlwjd\\OneDrive\\Desktop\\로그\\최종로그2\\plane\\export.json" +
                 "", JsonConvert.SerializeObject(answer, Formatting.Indented), System.Text.Encoding.UTF8);
-            File.WriteAllText("C:\\Users\\dlwjd\\OneDrive\\Desktop\\로그\\tester\\export2.json" +
+            File.WriteAllText("C:\\Users\\dlwjd\\OneDrive\\Desktop\\로그\\최종로그2\\plane\\export2.json" +
                 "", JsonConvert.SerializeObject(answer2, Formatting.Indented), System.Text.Encoding.UTF8);
 
             return Result.Succeeded;
